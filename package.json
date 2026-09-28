@@ -1,0 +1,29 @@
+{
+  "name": "webgen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Turn a one-line brief into a beautiful, accessible, deployment-ready website using Google AI Studio (Gemini).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test \"tests/unit/*.test.js\" \"tests/e2e/*.test.js\"",
+    "test:unit": "node --test \"tests/unit/*.test.js\"",
+    "verify:key": "node scripts/verify-key.js",
+    "fixtures": "node scripts/make-fixtures.js",
+    "test:e2e": "node --test \"tests/e2e/*.test.js\""
+  },
+  "dependencies": {
+    "@google/genai": "^1.30.0",
+    "archiver": "^7.0.1",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

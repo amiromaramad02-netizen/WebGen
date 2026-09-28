@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebGen — describe a site, get a real one</title>
+<meta name="description" content="Turn a one-line brief into a beautiful, accessible, deployment-ready website using Google AI Studio.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#brief-input">Skip to the brief</a>
+
+<header class="topbar">
+  <div class="topbar__brand">
+    <span class="mark" aria-hidden="true">W</span>
+    <span class="wordmark">WebGen</span>
+    <span class="pill" id="provider-pill">checking…</span>
+  </div>
+  <div class="topbar__actions">
+    <span class="tokens" id="token-counter" aria-live="polite">0 calls</span>
+    <button class="btn btn-ghost" type="button" id="open-key" aria-label="Change API key">API key</button>
+    <button class="btn btn-ghost" type="button" id="toggle-theme" aria-label="Toggle dark mode">
+      <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10Z"/></svg>
+      <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="setup" class="setup" hidden>
+  <div class="setup__card">
+    <h1>One key and you are running</h1>
+    <p>Paste a Google AI Studio key and WebGen will work out which service it belongs to, check it, and use it for every generation. It never leaves this machine — the browser only ever talks to <code>/api</code>.</p>
+
+    <form id="key-form" class="setup__form">
+      <label class="field">
+        <span class="field-label" for="key-input">API key</span>
+        <input id="key-input" class="field-input" type="password" autocomplete="off" spellcheck="false"
+          placeholder="AIza…" aria-describedby="key-status">
+      </label>
+      <p class="hint" id="key-hint">
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Create a key in AI Studio</a>
+      </p>
+      <div class="cluster">
+        <button class="btn btn-primary" type="submit" id="key-save">Use this key</button>
+        <button class="btn btn-ghost" type="button" id="key-verify">Verify saved key</button>
+        <button class="btn btn-ghost" type="button" id="key-clear">Forget key</button>
+      </div>
+      <label class="field field--inline" id="key-save-row">
+        <input id="key-persist" type="checkbox" checked>
+        <span>Save to <code>.env</code> so it survives a restart</span>
+      </label>
+      <p class="setup__status" id="key-status" role="status" aria-live="polite"></p>
+    </form>
+
+    <p class="muted setup__note">No key? WebGen runs against its mock provider, so the whole pipeline works — you just get fixture content instead of model-written content.</p>
+  </div>
+</div>
+
+<main class="workspace">
+  <!-- ───────────────────────────── brief ───────────────────────────── -->
+  <section class="pane pane--brief" aria-labelledby="brief-heading">
+    <h2 id="brief-heading" class="pane__title">Brief</h2>
+
+    <form id="generate-form" class="stack">
+      <label class="field">
+        <span class="field-label" id="brief-label">What should the site be?</span>
+        <textarea id="brief-input" class="field-input" rows="4" maxlength="4000" required
+          aria-describedby="brief-hint"
+          placeholder="A landing page for a coffee subscription called Roast Ritual — dark, moody, premium. Include pricing and an FAQ.">A landing page for a coffee subscription called Roast Ritual. Dark, moody, premium. Include pricing, testimonials and an FAQ.</textarea>
+      </label>
+      <p class="hint" id="brief-hint">One line is enough. The more specific you are about audience and tone, the better it lands.</p>
+
+      <div class="examples" role="group" aria-label="Example briefs">
+        <button class="chip" type="button" data-example="A SaaS landing page for an AI code review tool called Diffguard. Precise, technical, confident. Include pricing, a comparison table and an FAQ.">SaaS landing</button>
+        <button class="chip" type="button" data-example="A restaurant site for a small wood-fired place called Ember &amp; Ash. Warm, evening, unfussy. Menu, story, opening hours and a reservation form.">Restaurant</button>
+        <button class="chip" type="button" data-example="A three-page portfolio for a freelance product designer called Ana Ruiz. Minimal, refined, image-forward. Work, about, contact.">Portfolio</button>
+        <button class="chip" type="button" data-example="A documentation site for an open-source key-value store called Slat. Technical, dense, dark. Quickstart, commands and configuration reference.">Docs</button>
+        <button class="chip" type="button" data-example="A one-page event site for a two-day design conference called Grid. Bold, playful, energetic. Speakers, schedule, tickets and FAQ.">Event page</button>
+        <button class="chip" type="button" data-example="An agency site for a two-person brand studio called North Six. Editorial, sharp, confident. Services, selected work and a contact form.">Agency</button>
+      </div>
+
+      <details class="advanced">
+        <summary>Advanced options</summary>
+        <div class="advanced__grid">
+          <label class="field">
+            <span class="field-label" for="opt-brand">Brand name</span>
+            <input class="field-input" id="opt-brand" type="text" maxlength="40" placeholder="Invented if blank">
+          </label>
+          <label class="field">
+            <span class="field-label" for="opt-archetype">Layout archetype</span>
+            <select class="field-input" id="opt-archetype"><option value="">Auto</option></select>
+          </label>
+          <label class="field">
+            <span class="field-label" for="opt-pages">Pages (comma separated)</span>
+            <input class="field-input" id="opt-pages" type="text" maxlength="160" placeholder="index.html, about.html, pricing.html">
+          </label>
+          <label class="field">
+            <span class="field-label" for="opt-style">Style notes</span>
+            <input class="field-input" id="opt-style" type="text" maxlength="200" placeholder="e.g. dark, editorial, lots of whitespace">
+          </label>
+          <fieldset class="field field--inline">
+            <legend class="field-label">Theme</legend>
+            <div class="segmented" role="radiogroup" aria-label="Theme">
+              <button type="button" role="radio" aria-checked="true" data-theme-value="dark">Dark</button>
+              <button type="button" role="radio" aria-checked="false" data-theme-value="light">Light</button>
+              <button type="button" role="radio" aria-checked="false" data-theme-value="auto">Auto</button>
+            </div>
+          </fieldset>
+        </div>
+      </details>
+
+      <div class="cluster">
+        <button class="btn btn-primary btn-lg" type="submit" id="generate-btn">Generate site</button>
+        <button class="btn btn-ghost" type="button" id="cancel-btn" hidden>Stop</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ──────────────────────────── preview ─────────────────────────── -->
+  <section class="pane pane--preview" aria-labelledby="preview-heading">
+    <div class="preview__bar">
+      <h2 id="preview-heading" class="pane__title">Preview</h2>
+      <div class="device-toolbar" role="group" aria-label="Viewport">
+        <button type="button" class="device is-active" data-width="390" aria-pressed="true">390</button>
+        <button type="button" class="device" data-width="768" aria-pressed="false">768</button>
+        <button type="button" class="device" data-width="1440" aria-pressed="false">1440</button>
+      </div>
+      <div class="cluster">
+        <select class="field-input field-input--slim" id="route-select" aria-label="Route"></select>
+        <button class="btn btn-ghost" type="button" id="reload-preview" aria-label="Reload preview">Reload</button>
+        <button class="btn btn-ghost" type="button" id="open-tab" aria-label="Open in a new tab" disabled>Open ↗</button>
+      </div>
+    </div>
+
+    <div class="preview__stage" id="preview-stage">
+      <div class="preview__empty" id="preview-empty">
+        <svg viewBox="0 0 120 84" class="empty-art" aria-hidden="true">
+          <rect x="2" y="2" width="116" height="80" rx="6" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".35"/>
+          <path d="M2 16h116" stroke="currentColor" stroke-width="1.5" opacity=".35"/>
+          <circle cx="10" cy="9" r="1.6" fill="currentColor" opacity=".5"/><circle cx="16" cy="9" r="1.6" fill="currentColor" opacity=".5"/>
+          <path d="M14 26h44M14 34h64M14 46h52M14 58h40" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+          <rect x="84" y="26" width="24" height="40" rx="3" fill="currentColor" opacity=".18"/>
+        </svg>
+        <p>Write a brief and hit generate.<br>Your site appears here, file by file.</p>
+      </div>
+      <div class="preview__frame" id="preview-frame" hidden>
+        <iframe id="preview-iframe" title="Generated site preview" sandbox="allow-scripts allow-forms allow-same-origin allow-popups"></iframe>
+      </div>
+    </div>
+
+    <form class="editbar" id="edit-form" hidden>
+      <label class="visually-hidden" for="edit-input">Describe a change</label>
+      <input class="field-input" id="edit-input" type="text" maxlength="500" placeholder="Make the hero darker and add a security section">
+      <button class="btn btn-primary" type="submit" id="edit-btn">Apply</button>
+    </form>
+  </section>
+
+  <!-- ─────────────────────────── activity ─────────────────────────── -->
+  <section class="pane pane--activity" aria-labelledby="activity-heading">
+    <div class="preview__bar">
+      <h2 id="activity-heading" class="pane__title">Activity</h2>
+      <div class="cluster" id="export-cluster" hidden>
+        <button class="btn btn-ghost" type="button" id="btn-single">Single file</button>
+        <button class="btn btn-ghost" type="button" id="btn-zip">Download ZIP</button>
+        <button class="btn btn-primary" type="button" id="btn-deploy">Deploy</button>
+      </div>
+    </div>
+
+    <ol class="stages" id="stages" aria-live="polite"></ol>
+    <div class="log" id="log" role="log" aria-live="polite"></div>
+    <div class="report" id="report" hidden></div>
+    <div class="deploy-result" id="deploy-result" hidden></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>
